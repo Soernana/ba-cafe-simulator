@@ -1052,6 +1052,11 @@
       background: linear-gradient(180deg, #fff, #effaff);
     }
 
+    .mobile-dock-actions,
+    .mobile-stash-drop {
+      display: none;
+    }
+
     .count-note {
       color: var(--muted);
       font-size: .76rem;
@@ -1135,11 +1140,24 @@
         display: flex;
         flex-direction: column;
         min-height: auto;
+        padding-bottom: 18rem;
       }
       .main { order: 1; }
       .sidebar { order: 2; }
       .inspector { order: 3; }
-      .sidebar, .inspector { max-height: none; border-width: 1px 0 0; }
+      .sidebar { max-height: none; border-width: 1px 0 0; }
+      .inspector {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 70;
+        max-height: min(50dvh, 22rem);
+        border-width: 1px 0 0;
+        border-radius: 8px 8px 0 0;
+        box-shadow: 0 -14px 34px rgba(48,70,140,.18);
+        overflow: auto;
+      }
       .topbar {
         position: static;
         display: grid;
@@ -1162,25 +1180,87 @@
       }
       .pane { padding: .8rem; gap: .8rem; }
       .workspace { padding: .75rem; gap: .75rem; }
+      .inspector .pane {
+        display: grid;
+        grid-template-columns: 1fr;
+        padding: .55rem .65rem .7rem;
+        gap: .55rem;
+      }
+      .inspector .card {
+        padding: .65rem;
+      }
+      .inspector .card > .row:first-child {
+        align-items: center;
+        margin-bottom: .35rem;
+      }
+      .inspector .card h2 {
+        font-size: .9rem;
+      }
+      .inspector .controls {
+        gap: .45rem;
+        margin-top: .35rem !important;
+      }
+      .inspector label {
+        gap: .22rem;
+        font-size: .78rem;
+      }
+      .inspector input {
+        min-height: 2.15rem;
+        padding: .42rem .55rem;
+      }
+      .inspector .row {
+        gap: .4rem;
+      }
+      .inspector .box-summary {
+        margin-top: .2rem !important;
+        padding-top: .45rem !important;
+        gap: .45rem;
+      }
+      #selectedStudentList {
+        max-height: 9rem;
+        overflow: auto;
+      }
       .legend {
         display: grid;
         grid-template-columns: 1fr;
         gap: .4rem;
         padding: .55rem;
       }
-      .board-tools {
-        padding: .65rem;
-      }
-      .board-tools .row {
+      .board-tools { display: none; }
+      .mobile-dock-actions {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        width: 100%;
-        gap: .5rem;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: .35rem;
       }
-      .board-tools button {
+      .mobile-dock-actions button {
         width: 100%;
-        min-height: 2.6rem;
-        padding: .45rem .5rem;
+        min-height: 2.2rem;
+        padding: .35rem .3rem;
+        font-size: .76rem;
+        line-height: 1.15;
+      }
+      .mobile-stash-drop {
+        display: grid;
+        place-items: center;
+        min-height: 2.55rem;
+        border: 2px dashed #9bd5ff;
+        border-radius: 8px;
+        background: linear-gradient(180deg, #f5fbff, #fff7fb);
+        color: #3b4380;
+        font-size: .82rem;
+        font-weight: 800;
+        text-align: center;
+        transition: border-color .14s ease, background .14s ease, box-shadow .14s ease;
+      }
+      .mobile-stash-drop.drag-over {
+        border-color: var(--accent);
+        background: #effaff;
+        box-shadow: 0 0 0 4px rgba(92,200,255,.18);
+      }
+      .mobile-stash-drop.bad {
+        border-color: var(--danger);
+        background: #fff1f5;
+        color: #b31642;
       }
       .boards-grid { grid-template-columns: 1fr; }
       .rooms-stack { gap: .8rem; }
@@ -1223,11 +1303,11 @@
       .owned-row input[type="number"] { width: 100%; }
       .mini-row {
         grid-template-columns: 1fr;
+        padding: .45rem;
       }
       .mini-row button {
         width: 100%;
       }
-      .inspector .pane { display: grid; grid-template-columns: 1fr; }
       .split, .triple { grid-template-columns: 1fr; }
     }
 
@@ -1235,11 +1315,13 @@
       :root { --cell: clamp(14px, 4.25vw, 18px); }
       button, input, select, textarea { font-size: .9rem; }
       .topbar .status,
-      .board-tools .row,
       .room-panel-head .status,
       .owned-controls {
         grid-template-columns: 1fr;
       }
+      .app { padding-bottom: 20rem; }
+      .inspector { max-height: min(56dvh, 24rem); }
+      .mobile-dock-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .pill {
         width: 100%;
         justify-content: center;
@@ -1301,7 +1383,7 @@
           <span class="pill"><strong id="areaUsed">0</strong>/400マス</span>
           <span class="pill"><strong id="motionCount">0</strong>モーション</span>
           <span class="pill"><strong id="studentCount">0</strong>生徒</span>
-          <span id="heightBadge" class="pill ok"><strong id="maxHeight">0</strong>/7高</span>
+          <span id="heightBadge" class="pill ok">最大高さ <strong id="maxHeight">0</strong>/7</span>
         </div>
       </header>
 
@@ -1374,6 +1456,13 @@
               <button id="useStudentFilterBtn" type="button">生徒を追加</button>
               <button id="clearTargetsBtn" type="button">検索クリア</button>
             </div>
+            <div class="mobile-dock-actions" aria-label="配置操作">
+              <button id="mobileRotateBtn" type="button">回転</button>
+              <button id="mobileClearSelectionBtn" type="button">選択解除</button>
+              <button id="mobileClearBtn" class="danger" type="button">全消去</button>
+              <button id="mobileCopyRoom1ToRoom2Btn" type="button">1→2コピー</button>
+            </div>
+            <div id="mobileStashDrop" class="mobile-stash-drop" role="button" tabindex="0">ここへドラッグで一時置き場へ移動</div>
             <div class="box-summary" style="margin-top:.1rem; padding-top:.75rem">
               <div class="row" style="justify-content:space-between">
                 <h3>選択生徒一覧</h3>
@@ -1448,6 +1537,7 @@
         "clearBtn", "copyRoom1ToRoom2Btn",
         "studentSearch", "studentCandidates", "useStudentFilterBtn", "clearTargetsBtn", "clearSelectedStudentsBtn",
         "selectedStudentList",
+        "mobileRotateBtn", "mobileClearSelectionBtn", "mobileClearBtn", "mobileCopyRoom1ToRoom2Btn", "mobileStashDrop",
         "requiredFurnitureCount", "requiredSeriesCount", "requiredUnavailableCount", "requiredRarityBreakdown", "hideOwnedRequired", "seriesBreakdown",
         "dataNotice"
       ].forEach(id => els[id] = $(id));
@@ -2104,12 +2194,27 @@
       }) || null;
     }
 
+    function mobileStashDropAtPoint(ev) {
+      const drop = els.mobileStashDrop;
+      if (!drop || getComputedStyle(drop).display === "none") return false;
+      const rect = drop.getBoundingClientRect();
+      return ev.clientX >= rect.left && ev.clientX <= rect.right && ev.clientY >= rect.top && ev.clientY <= rect.bottom;
+    }
+
+    function setMobileStashDropState(active, bad = false) {
+      const drop = els.mobileStashDrop;
+      if (!drop) return;
+      drop.classList.toggle("drag-over", active);
+      drop.classList.toggle("bad", active && bad);
+    }
+
     function hideDragPreviews() {
       BOARD_ROOMS.forEach(room => {
         const preview = previewEl(room);
         preview.style.display = "none";
         preview.classList.remove("bad");
       });
+      setMobileStashDropState(false);
     }
 
     function dragDropTarget(ev, item, rotated) {
@@ -2194,6 +2299,19 @@
         const item = p && itemById(p.furnitureId);
         if (!p || !item) return;
         const d = dimsOf(item, p.rotated);
+        if (sourceRoom !== "stash" && mobileStashDropAtPoint(ev)) {
+          state.drag.crossRoom = true;
+          if (!state.drag.targetBefore || state.drag.targetRoom !== "stash") {
+            state.drag.targetRoom = "stash";
+            state.drag.targetBefore = JSON.parse(JSON.stringify(placedFor("stash")));
+          }
+          const position = findOpenPosition("stash", item, p.x, p.y, p.rotated);
+          setMobileStashDropState(true, !position);
+          hideDragPreviews();
+          setMobileStashDropState(true, !position);
+          return;
+        }
+        setMobileStashDropState(false);
         const target = dragDropTarget(ev, item, p.rotated);
         if (target?.room && target.room !== sourceRoom) {
           state.drag.crossRoom = true;
@@ -2234,6 +2352,35 @@
         const sourceRoom = drag.room;
         const p = placedFor(sourceRoom).find(placed => placed.id === drag.id);
         const item = p && itemById(p.furnitureId);
+        if (sourceRoom !== "stash" && item && mobileStashDropAtPoint(ev)) {
+          const position = findOpenPosition("stash", item, p.x, p.y, p.rotated);
+          if (position) {
+            state.lastTransfer = {
+              type: "room",
+              sourceRoom,
+              targetRoom: "stash",
+              sourceBefore: drag.sourceBefore,
+              targetBefore: drag.targetBefore || JSON.parse(JSON.stringify(placedFor("stash"))),
+            };
+            setPlacedFor(sourceRoom, placedFor(sourceRoom).filter(placed => placed.id !== drag.id));
+            setPlacedFor("stash", position.fit.adjusted.map(placed =>
+              placed.id === "__transfer__" ? { ...placed, id: drag.id } : placed
+            ));
+            state.selectedPlacedId = drag.id;
+            state.selectedPlacedRoom = "stash";
+            state.selectedFurnitureId = null;
+          } else if (drag.moved || drag.crossRoom) {
+            setPlacedFor(sourceRoom, drag.sourceBefore);
+            state.selectedPlacedId = drag.id;
+            state.selectedPlacedRoom = sourceRoom;
+          }
+          hideDragPreviews();
+          state.drag = null;
+          try { boardEl(sourceRoom).releasePointerCapture(ev.pointerId); } catch {}
+          save();
+          renderAll();
+          return;
+        }
         const target = item ? dragDropTarget(ev, item, p.rotated) : null;
         const targetFit = target?.room && target.room !== sourceRoom && item
           ? fitPlacementInList(placedFor(target.room), item, target.x, target.y, p.rotated, null, p.id)
@@ -3128,6 +3275,29 @@
       els.requiredBoxesPanel.classList.toggle("hidden", !showBoxes);
     }
 
+    function rotateAction() {
+      if (state.selectedPlacedId) rotateSelectedPlaced();
+      else state.rotated = !state.rotated;
+    }
+
+    function clearSelectionAction() {
+      state.selectedFurnitureId = null;
+      state.selectedPlacedId = null;
+      state.selectedPlacedRoom = null;
+      renderAll();
+    }
+
+    function clearCurrentRoomAction() {
+      if (!currentPlaced().length) return;
+      if (!confirm(`${state.currentRoom === "room1" ? "1号店" : "2号店"}の配置をすべて消去しますか？`)) return;
+      pushHistory();
+      currentRoom().placed = [];
+      state.selectedPlacedId = null;
+      state.selectedPlacedRoom = null;
+      save();
+      renderAll();
+    }
+
     function renderAll() {
       renderRoomButtons();
       renderBoard("room1");
@@ -3186,43 +3356,32 @@
           filterByStudent(els.studentSearch.value);
         }
       });
-      els.rotateBtn.addEventListener("click", () => {
-        if (state.selectedPlacedId) rotateSelectedPlaced();
-        else state.rotated = !state.rotated;
-      });
-      els.clearSelectionBtn.addEventListener("click", () => {
-        state.selectedFurnitureId = null;
-        state.selectedPlacedId = null;
-        state.selectedPlacedRoom = null;
-        renderAll();
-      });
+      els.rotateBtn.addEventListener("click", rotateAction);
+      els.clearSelectionBtn.addEventListener("click", clearSelectionAction);
       els.clearTargetsBtn.addEventListener("click", () => {
         els.studentSearch.value = "";
         renderCoveredStudents();
       });
-      els.clearBtn.addEventListener("click", () => {
-        if (!currentPlaced().length) return;
-        if (!confirm(`${state.currentRoom === "room1" ? "1号店" : "2号店"}の配置をすべて消去しますか？`)) return;
-        pushHistory();
-        currentRoom().placed = [];
-        state.selectedPlacedId = null;
-        state.selectedPlacedRoom = null;
-        save();
-        renderAll();
-      });
+      els.clearBtn.addEventListener("click", clearCurrentRoomAction);
       els.copyRoom1ToRoom2Btn.addEventListener("click", copyRoom1ToRoom2);
+      els.mobileRotateBtn.addEventListener("click", rotateAction);
+      els.mobileClearSelectionBtn.addEventListener("click", clearSelectionAction);
+      els.mobileClearBtn.addEventListener("click", clearCurrentRoomAction);
+      els.mobileCopyRoom1ToRoom2Btn.addEventListener("click", copyRoom1ToRoom2);
+      els.mobileStashDrop.addEventListener("click", moveSelectedToStash);
+      els.mobileStashDrop.addEventListener("keydown", ev => {
+        if (ev.key !== "Enter" && ev.key !== " ") return;
+        ev.preventDefault();
+        moveSelectedToStash();
+      });
       window.addEventListener("keydown", ev => {
         if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)) return;
         if (ev.key === "Delete" || ev.key === "Backspace") removeSelectedPlaced();
         if (ev.key.toLowerCase() === "r") {
-          if (state.selectedPlacedId) rotateSelectedPlaced();
-          else state.rotated = !state.rotated;
+          rotateAction();
         }
         if (ev.key === "Escape") {
-          state.selectedFurnitureId = null;
-          state.selectedPlacedId = null;
-          state.selectedPlacedRoom = null;
-          renderAll();
+          clearSelectionAction();
         }
       });
       window.addEventListener("resize", () => {
