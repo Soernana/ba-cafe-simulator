@@ -216,6 +216,10 @@ const html = String.raw`<!doctype html>
       justify-content: flex-end;
     }
 
+    .topbar .status {
+      display: none;
+    }
+
     .pill {
       display: inline-flex;
       align-items: center;
@@ -1227,11 +1231,6 @@ const html = String.raw`<!doctype html>
       h2 { font-size: .96rem; }
       .sub { font-size: .8rem; }
       .status { justify-content: flex-start; }
-      .topbar .status {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        width: 100%;
-      }
       .topbar .pill {
         justify-content: center;
         min-width: 0;
@@ -1466,7 +1465,6 @@ const html = String.raw`<!doctype html>
     @media (max-width: 430px) {
       :root { --cell: clamp(14px, 4.25vw, 18px); }
       button, input, select, textarea { font-size: .9rem; }
-      .topbar .status,
       .room-panel-head .status,
       .owned-controls {
         grid-template-columns: 1fr;
@@ -1988,7 +1986,7 @@ const html = String.raw`<!doctype html>
         row.className = "mini-row";
         row.innerHTML = '<div><strong></strong><div class="count-note"></div></div><button type="button">選択</button>';
         row.querySelector("strong").textContent = item.name;
-        row.querySelector(".count-note").textContent = \`\${item.size.width}×\${item.size.depth}×\${item.size.height} / \${item.series || "シリーズなし"} / \${manufactureLabel(item)}\`;
+        row.querySelector(".count-note").textContent = \`\${item.size.width}×\${item.size.depth}×\${item.size.height} / \${item.series || "シリーズなし"} / \${manufactureLabel(item)} / 来る生徒: \${item.students.join("、")}\`;
         row.querySelector("button").addEventListener("click", () => selectFurnitureItem(item));
         els.mobileStudentFurnitureList.append(row);
       });
