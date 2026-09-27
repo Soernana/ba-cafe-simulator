@@ -1140,17 +1140,130 @@ const html = String.raw`<!doctype html>
     }
 
     @media (max-width: 820px) {
-      :root { --cell: min(4.55vw, 22px); }
-      .app { display: block; }
-      .sidebar, .inspector { max-height: none; border-width: 0 0 1px; }
-      .topbar { position: static; display: grid; }
+      :root { --cell: clamp(15px, 4.45vw, 21px); }
+      body { background-attachment: scroll; }
+      .app {
+        display: flex;
+        flex-direction: column;
+        min-height: auto;
+      }
+      .main { order: 1; }
+      .sidebar { order: 2; }
+      .inspector { order: 3; }
+      .sidebar, .inspector { max-height: none; border-width: 1px 0 0; }
+      .topbar {
+        position: static;
+        display: grid;
+        gap: .75rem;
+        padding: .85rem .9rem .75rem;
+      }
+      h1 { font-size: 1.18rem; line-height: 1.25; }
+      h2 { font-size: .96rem; }
+      .sub { font-size: .8rem; }
       .status { justify-content: flex-start; }
-      .workspace { padding: .8rem; }
+      .topbar .status {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+      }
+      .topbar .pill {
+        justify-content: center;
+        min-width: 0;
+        white-space: normal;
+      }
+      .pane { padding: .8rem; gap: .8rem; }
+      .workspace { padding: .75rem; gap: .75rem; }
+      .legend {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: .4rem;
+        padding: .55rem;
+      }
+      .board-tools {
+        padding: .65rem;
+      }
+      .board-tools .row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+        gap: .5rem;
+      }
+      .board-tools button {
+        width: 100%;
+        min-height: 2.6rem;
+        padding: .45rem .5rem;
+      }
       .boards-grid { grid-template-columns: 1fr; }
+      .rooms-stack { gap: .8rem; }
+      .room-panel,
+      .stash-panel {
+        padding: .7rem;
+        gap: .6rem;
+      }
+      .room-panel-head {
+        display: grid;
+        grid-template-columns: 1fr;
+        justify-items: stretch;
+      }
+      .room-panel-head .status {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
       .stash-panel { position: static; }
-      .board-wrap { width: 100%; overflow-x: auto; justify-items: start; }
+      .board-wrap {
+        width: 100%;
+        overflow-x: auto;
+        justify-items: center;
+        padding-bottom: .15rem;
+      }
+      .board {
+        max-width: calc(100vw - 1.5rem);
+        max-height: calc(100vw - 1.5rem);
+      }
+      .axis { font-size: .64rem; }
+      .furn { font-size: .62rem; padding: .08rem; border-width: 1px; }
+      .furn.wall-decoration::after { font-size: .54rem; }
+      .summary-tabs { grid-template-columns: 1fr; }
+      .summary-tab { min-height: 2.35rem; }
+      .arrival-groups { grid-template-columns: 1fr; }
+      .arrival-list { max-height: 8.5rem; }
+      .owned-controls {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: stretch;
+      }
+      .owned-row input[type="number"] { width: 100%; }
+      .mini-row {
+        grid-template-columns: 1fr;
+      }
+      .mini-row button {
+        width: 100%;
+      }
       .inspector .pane { display: grid; grid-template-columns: 1fr; }
       .split, .triple { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 430px) {
+      :root { --cell: clamp(14px, 4.25vw, 18px); }
+      button, input, select, textarea { font-size: .9rem; }
+      .topbar .status,
+      .board-tools .row,
+      .room-panel-head .status,
+      .owned-controls {
+        grid-template-columns: 1fr;
+      }
+      .pill {
+        width: 100%;
+        justify-content: center;
+      }
+      .card { padding: .8rem; }
+      .board::before,
+      .board::after {
+        font-size: .5rem;
+      }
+      .furn {
+        font-size: .55rem;
+        line-height: 1.05;
+      }
     }
   </style>
 </head>
