@@ -1066,8 +1066,10 @@ const html = String.raw`<!doctype html>
     .mobile-dock-actions,
     .mobile-stash-drop,
     .mobile-dock-tabs,
+    .mobile-view-tabs,
     .mobile-picker-panel,
-    .mobile-manage-list {
+    .mobile-manage-list,
+    .student-suggest-list {
       display: none;
     }
 
@@ -1170,6 +1172,39 @@ const html = String.raw`<!doctype html>
       .sidebar { order: 2; }
       .inspector { order: 3; }
       .sidebar { max-height: none; border-width: 1px 0 0; }
+      .mobile-view-tabs {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .35rem;
+        padding: .22rem;
+        border: 1px solid #bfe9ff;
+        border-radius: 8px;
+        background: linear-gradient(90deg, #effaff, #fff7fb);
+      }
+      .mobile-view-tab {
+        min-height: 2.15rem;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        box-shadow: none;
+        color: var(--muted);
+        font-weight: 850;
+      }
+      .mobile-view-tab.active {
+        color: var(--accent-deep);
+        background: #fff;
+        box-shadow: 0 6px 14px rgba(48,70,140,.10);
+      }
+      body.mobile-view-summary .workspace,
+      body.mobile-view-summary .inspector {
+        display: none;
+      }
+      body.mobile-view-summary .app {
+        padding-bottom: 0;
+      }
+      body.mobile-view-cafe .sidebar {
+        display: none;
+      }
       .inspector {
         position: fixed;
         left: 0;
@@ -1268,6 +1303,22 @@ const html = String.raw`<!doctype html>
       .inspector input {
         min-height: 2.15rem;
         padding: .42rem .55rem;
+      }
+      .student-suggest-list {
+        display: grid;
+        gap: .28rem;
+        max-height: 8rem;
+        overflow: auto;
+      }
+      .student-suggest-list.hidden {
+        display: none;
+      }
+      .student-suggest-list button {
+        min-height: 2rem;
+        padding: .32rem .5rem;
+        border-color: #d9e9ff;
+        box-shadow: none;
+        text-align: left;
       }
       .inspector .row {
         gap: .4rem;
@@ -1486,6 +1537,10 @@ const html = String.raw`<!doctype html>
           <span class="pill"><strong id="studentCount">0</strong>生徒</span>
           <span id="heightBadge" class="pill ok">最大高さ <strong id="maxHeight">0</strong>/7</span>
         </div>
+        <div class="mobile-view-tabs" role="tablist" aria-label="スマホ表示切替">
+          <button id="mobileViewCafeBtn" class="mobile-view-tab active" type="button" role="tab" aria-selected="true" data-mobile-view="cafe">カフェ</button>
+          <button id="mobileViewSummaryBtn" class="mobile-view-tab" type="button" role="tab" aria-selected="false" data-mobile-view="summary">集計</button>
+        </div>
       </header>
 
       <div class="workspace">
@@ -1579,6 +1634,7 @@ const html = String.raw`<!doctype html>
                 <input id="studentSearch" list="studentCandidates" type="search" placeholder="名前を入力して候補から選択">
                 <datalist id="studentCandidates"></datalist>
               </label>
+              <div id="studentSuggestList" class="student-suggest-list hidden"></div>
               <div class="row">
                 <button id="useStudentFilterBtn" type="button">生徒を追加</button>
                 <button id="clearTargetsBtn" type="button">検索クリア</button>
@@ -1643,6 +1699,7 @@ const html = String.raw`<!doctype html>
       hideOwnedRequired: false,
       activeSummaryTab: "students",
       mobileDockTab: "ops",
+      mobileView: "cafe",
       mobileSelectedStudent: "",
     };
 
@@ -1660,7 +1717,8 @@ const html = String.raw`<!doctype html>
         "motionCount", "studentCount", "maxHeight", "heightBadge", "rotateBtn", "clearSelectionBtn",
         "clearBtn", "copyRoom1ToRoom2Btn",
         "studentSearch", "studentCandidates", "useStudentFilterBtn", "clearTargetsBtn", "clearSelectedStudentsBtn",
-        "selectedStudentList",
+        "selectedStudentList", "studentSuggestList",
+        "mobileViewCafeBtn", "mobileViewSummaryBtn",
         "mobileTabOps", "mobileTabPicker", "mobileTabTargets", "mobileStudentSelect", "mobileStudentFurnitureList", "mobileSelectedStudentManageList",
         "mobileRotateBtn", "mobileClearSelectionBtn", "mobileClearBtn", "mobileCopyRoom1ToRoom2Btn", "mobileStashDrop",
         "requiredFurnitureCount", "requiredSeriesCount", "requiredUnavailableCount", "requiredRarityBreakdown", "hideOwnedRequired", "seriesBreakdown",
@@ -1770,12 +1828,47 @@ const html = String.raw`<!doctype html>
       els.useStudentFilterBtn.disabled = !names.length;
     }
 
+    function studentNames() {
+      return studentData.map(student => student.name).sort(localeSort);
+    }
+
+    function renderStudentSuggestions() {
+      const root = els.studentSuggestList;
+      if (!root) return;
+      const query = normalizeStudentName(els.studentSearch.value);
+      root.innerHTML = "";
+      if (!query) {
+        root.classList.add("hidden");
+        return;
+      }
+      const exactSelected = state.selectedStudents.includes(query);
+      const matches = studentNames()
+        .filter(name => name.includes(query) && (!exactSelected || name !== query))
+        .slice(0, 8);
+      if (!matches.length) {
+        root.classList.add("hidden");
+        return;
+      }
+      matches.forEach(name => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = name;
+        button.addEventListener("click", () => {
+          filterByStudent(name);
+          root.classList.add("hidden");
+        });
+        root.append(button);
+      });
+      root.classList.remove("hidden");
+    }
+
     function filterByStudent(name) {
       name = normalizeStudentName(name);
       if (!name) return;
       els.studentSearch.value = name;
       addSelectedStudent(name);
       renderCoveredStudents();
+      renderStudentSuggestions();
     }
 
     function useSelectedStudentFilter() {
@@ -3479,6 +3572,16 @@ const html = String.raw`<!doctype html>
       });
     }
 
+    function renderMobileViewTabs() {
+      document.body.classList.toggle("mobile-view-cafe", state.mobileView === "cafe");
+      document.body.classList.toggle("mobile-view-summary", state.mobileView === "summary");
+      [els.mobileViewCafeBtn, els.mobileViewSummaryBtn].forEach(button => {
+        const active = button.dataset.mobileView === state.mobileView;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-selected", String(active));
+      });
+    }
+
     function rotateAction() {
       if (state.selectedPlacedId) rotateSelectedPlaced();
       else state.rotated = !state.rotated;
@@ -3515,6 +3618,7 @@ const html = String.raw`<!doctype html>
       renderPreferenceControls();
       renderSummaryTabs();
       renderMobileDockTabs();
+      renderMobileViewTabs();
       renderDataNotice();
     }
 
@@ -3553,6 +3657,13 @@ const html = String.raw`<!doctype html>
           renderMobileDockTabs();
         });
       });
+      [els.mobileViewCafeBtn, els.mobileViewSummaryBtn].forEach(button => {
+        button.addEventListener("click", () => {
+          state.mobileView = button.dataset.mobileView;
+          renderMobileViewTabs();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      });
       els.mobileStudentSelect.addEventListener("change", () => {
         state.mobileSelectedStudent = els.mobileStudentSelect.value;
         renderMobileStudentPicker();
@@ -3572,10 +3683,13 @@ const html = String.raw`<!doctype html>
           filterByStudent(els.studentSearch.value);
         }
       });
+      els.studentSearch.addEventListener("input", renderStudentSuggestions);
+      els.studentSearch.addEventListener("focus", renderStudentSuggestions);
       els.rotateBtn.addEventListener("click", rotateAction);
       els.clearSelectionBtn.addEventListener("click", clearSelectionAction);
       els.clearTargetsBtn.addEventListener("click", () => {
         els.studentSearch.value = "";
+        renderStudentSuggestions();
         renderCoveredStudents();
       });
       els.clearBtn.addEventListener("click", clearCurrentRoomAction);
