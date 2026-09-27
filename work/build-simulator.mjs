@@ -1064,7 +1064,20 @@ const html = String.raw`<!doctype html>
     }
 
     .mobile-dock-actions,
-    .mobile-stash-drop {
+    .mobile-stash-drop,
+    .mobile-dock-tabs,
+    .mobile-picker-panel,
+    .mobile-manage-list {
+      display: none;
+    }
+
+    .dock-panel {
+      display: grid;
+      gap: .65rem;
+    }
+
+    .dock-panel-ops,
+    .dock-panel-picker {
       display: none;
     }
 
@@ -1211,6 +1224,43 @@ const html = String.raw`<!doctype html>
         gap: .45rem;
         margin-top: .35rem !important;
       }
+      .mobile-dock-tabs {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: .3rem;
+        padding: .22rem;
+        border: 1px solid #bfe9ff;
+        border-radius: 8px;
+        background: linear-gradient(90deg, #effaff, #fff7fb);
+      }
+      .mobile-dock-tab {
+        min-height: 2.05rem;
+        padding: .28rem .25rem;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        box-shadow: none;
+        color: var(--muted);
+        font-size: .74rem;
+        font-weight: 850;
+        line-height: 1.15;
+      }
+      .mobile-dock-tab.active {
+        color: var(--accent-deep);
+        background: #fff;
+        box-shadow: 0 6px 14px rgba(48,70,140,.10);
+      }
+      .dock-panel {
+        display: none;
+        gap: .45rem;
+      }
+      .dock-panel.active {
+        display: grid;
+      }
+      .mobile-picker-panel,
+      .mobile-manage-list {
+        display: grid;
+      }
       .inspector label {
         gap: .22rem;
         font-size: .78rem;
@@ -1228,8 +1278,48 @@ const html = String.raw`<!doctype html>
         gap: .45rem;
       }
       #selectedStudentList {
+        display: none;
         max-height: 9rem;
         overflow: auto;
+      }
+      .mobile-picker-panel {
+        gap: .45rem;
+      }
+      .mobile-picker-list {
+        display: grid;
+        gap: .4rem;
+        max-height: 9.5rem;
+        overflow: auto;
+      }
+      .mobile-manage-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .35rem;
+        max-height: 7rem;
+        overflow: auto;
+      }
+      .mobile-student-chip {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: .3rem;
+        padding: .35rem .4rem;
+        border: 1px solid #d9e9ff;
+        border-radius: 8px;
+        background: #fff;
+        font-size: .78rem;
+      }
+      .mobile-student-chip span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .mobile-student-chip button {
+        min-height: 1.8rem;
+        padding: .18rem .38rem;
+        font-size: .75rem;
+      }
+      .mobile-manage-list .empty {
+        grid-column: 1 / -1;
       }
       .legend {
         display: grid;
@@ -1459,27 +1549,48 @@ const html = String.raw`<!doctype html>
             <h2>生徒から家具を選ぶ</h2>
           </div>
           <div class="controls" style="margin-top:.75rem">
-            <label>生徒名検索
-              <input id="studentSearch" list="studentCandidates" type="search" placeholder="名前を入力して候補から選択">
-              <datalist id="studentCandidates"></datalist>
-            </label>
-            <div class="row">
-              <button id="useStudentFilterBtn" type="button">生徒を追加</button>
-              <button id="clearTargetsBtn" type="button">検索クリア</button>
+            <div class="mobile-dock-tabs" role="tablist" aria-label="スマホ操作メニュー">
+              <button id="mobileTabOps" class="mobile-dock-tab active" type="button" role="tab" aria-selected="true" data-mobile-tab="ops">家具操作</button>
+              <button id="mobileTabPicker" class="mobile-dock-tab" type="button" role="tab" aria-selected="false" data-mobile-tab="picker">選択生徒</button>
+              <button id="mobileTabTargets" class="mobile-dock-tab" type="button" role="tab" aria-selected="false" data-mobile-tab="targets">生徒追加</button>
             </div>
-            <div class="mobile-dock-actions" aria-label="配置操作">
-              <button id="mobileRotateBtn" type="button">回転</button>
-              <button id="mobileClearSelectionBtn" type="button">選択解除</button>
-              <button id="mobileClearBtn" class="danger" type="button">全消去</button>
-              <button id="mobileCopyRoom1ToRoom2Btn" type="button">1→2コピー</button>
-            </div>
-            <div id="mobileStashDrop" class="mobile-stash-drop" role="button" tabindex="0">ここへドラッグで一時置き場へ移動</div>
-            <div class="box-summary" style="margin-top:.1rem; padding-top:.75rem">
-              <div class="row" style="justify-content:space-between">
-                <h3>選択生徒一覧</h3>
-                <button id="clearSelectedStudentsBtn" type="button">クリア</button>
+
+            <div class="dock-panel dock-panel-ops active" data-mobile-panel="ops">
+              <div class="mobile-dock-actions" aria-label="配置操作">
+                <button id="mobileRotateBtn" type="button">回転</button>
+                <button id="mobileClearSelectionBtn" type="button">選択解除</button>
+                <button id="mobileClearBtn" class="danger" type="button">全消去</button>
+                <button id="mobileCopyRoom1ToRoom2Btn" type="button">1→2コピー</button>
               </div>
-              <div id="selectedStudentList"></div>
+              <div id="mobileStashDrop" class="mobile-stash-drop" role="button" tabindex="0">ここへドラッグで一時置き場へ移動</div>
+            </div>
+
+            <div class="dock-panel dock-panel-picker" data-mobile-panel="picker">
+              <div class="mobile-picker-panel">
+                <label>選択生徒
+                  <select id="mobileStudentSelect"></select>
+                </label>
+                <div id="mobileStudentFurnitureList" class="mobile-picker-list"></div>
+              </div>
+            </div>
+
+            <div class="dock-panel dock-panel-targets" data-mobile-panel="targets">
+              <label>生徒名検索
+                <input id="studentSearch" list="studentCandidates" type="search" placeholder="名前を入力して候補から選択">
+                <datalist id="studentCandidates"></datalist>
+              </label>
+              <div class="row">
+                <button id="useStudentFilterBtn" type="button">生徒を追加</button>
+                <button id="clearTargetsBtn" type="button">検索クリア</button>
+              </div>
+              <div class="box-summary" style="margin-top:.1rem; padding-top:.75rem">
+                <div class="row" style="justify-content:space-between">
+                  <h3>選択生徒一覧</h3>
+                  <button id="clearSelectedStudentsBtn" type="button">クリア</button>
+                </div>
+                <div id="mobileSelectedStudentManageList" class="mobile-manage-list"></div>
+                <div id="selectedStudentList"></div>
+              </div>
             </div>
           </div>
         </section>
@@ -1531,6 +1642,8 @@ const html = String.raw`<!doctype html>
       ownedChecked: {},
       hideOwnedRequired: false,
       activeSummaryTab: "students",
+      mobileDockTab: "ops",
+      mobileSelectedStudent: "",
     };
 
     const colorCache = new Map();
@@ -1548,6 +1661,7 @@ const html = String.raw`<!doctype html>
         "clearBtn", "copyRoom1ToRoom2Btn",
         "studentSearch", "studentCandidates", "useStudentFilterBtn", "clearTargetsBtn", "clearSelectedStudentsBtn",
         "selectedStudentList",
+        "mobileTabOps", "mobileTabPicker", "mobileTabTargets", "mobileStudentSelect", "mobileStudentFurnitureList", "mobileSelectedStudentManageList",
         "mobileRotateBtn", "mobileClearSelectionBtn", "mobileClearBtn", "mobileCopyRoom1ToRoom2Btn", "mobileStashDrop",
         "requiredFurnitureCount", "requiredSeriesCount", "requiredUnavailableCount", "requiredRarityBreakdown", "hideOwnedRequired", "seriesBreakdown",
         "dataNotice"
@@ -1673,6 +1787,7 @@ const html = String.raw`<!doctype html>
       if (!name) return;
       if (!state.selectedStudents.includes(name)) {
         state.selectedStudents.push(name);
+        if (!state.mobileSelectedStudent) state.mobileSelectedStudent = name;
         savePreferences();
       }
       renderSelectedStudentList();
@@ -1681,6 +1796,7 @@ const html = String.raw`<!doctype html>
     function removeSelectedStudent(name) {
       state.selectedStudents = state.selectedStudents.filter(student => student !== name);
       delete state.studentPriorities[name];
+      if (state.mobileSelectedStudent === name) state.mobileSelectedStudent = "";
       savePreferences();
       renderSelectedStudentList();
       renderCoveredStudents();
@@ -1696,6 +1812,7 @@ const html = String.raw`<!doctype html>
       els.selectedStudentList.innerHTML = "";
       if (!state.selectedStudents.length) {
         els.selectedStudentList.innerHTML = '<div class="empty">検索から生徒を追加すると、対応家具をここで確認できます。</div>';
+        renderMobileStudentMenus();
         return;
       }
       state.selectedStudents.slice().sort(localeSort).forEach(student => {
@@ -1719,12 +1836,7 @@ const html = String.raw`<!doctype html>
             row.innerHTML = '<div><strong></strong><div class="count-note"></div></div><button type="button">選択</button>';
             row.querySelector("strong").textContent = item.name;
             row.querySelector(".count-note").textContent = \`\${item.size.width}×\${item.size.depth}×\${item.size.height} / \${item.series || "シリーズなし"} / \${manufactureLabel(item)} / 来る生徒: \${item.students.join("、")}\`;
-            row.querySelector("button").addEventListener("click", () => {
-              state.selectedFurnitureId = item.id;
-              state.selectedPlacedId = null;
-              state.selectedPlacedRoom = null;
-              renderAll();
-            });
+            row.querySelector("button").addEventListener("click", () => selectFurnitureItem(item));
             body.append(row);
           });
         }
@@ -1734,6 +1846,76 @@ const html = String.raw`<!doctype html>
         remove.addEventListener("click", () => removeSelectedStudent(student));
         body.append(remove);
         els.selectedStudentList.append(details);
+      });
+      renderMobileStudentMenus();
+    }
+
+    function selectFurnitureItem(item) {
+      state.selectedFurnitureId = item.id;
+      state.selectedPlacedId = null;
+      state.selectedPlacedRoom = null;
+      renderAll();
+    }
+
+    function renderMobileStudentMenus() {
+      renderMobileStudentPicker();
+      renderMobileSelectedStudentManageList();
+    }
+
+    function renderMobileStudentPicker() {
+      if (!els.mobileStudentSelect || !els.mobileStudentFurnitureList) return;
+      const students = state.selectedStudents.slice().sort(localeSort);
+      els.mobileStudentSelect.innerHTML = "";
+      if (!students.length) {
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = "選択生徒なし";
+        els.mobileStudentSelect.append(option);
+        els.mobileStudentFurnitureList.innerHTML = '<div class="empty">生徒追加タブで生徒を追加してください。</div>';
+        state.mobileSelectedStudent = "";
+        return;
+      }
+      if (!students.includes(state.mobileSelectedStudent)) state.mobileSelectedStudent = students[0];
+      students.forEach(student => {
+        const option = document.createElement("option");
+        option.value = student;
+        option.textContent = student;
+        els.mobileStudentSelect.append(option);
+      });
+      els.mobileStudentSelect.value = state.mobileSelectedStudent;
+
+      const items = furnitureForStudent(state.mobileSelectedStudent);
+      els.mobileStudentFurnitureList.innerHTML = "";
+      if (!items.length) {
+        els.mobileStudentFurnitureList.innerHTML = '<div class="empty">対応家具が見つかりません。</div>';
+        return;
+      }
+      items.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "mini-row";
+        row.innerHTML = '<div><strong></strong><div class="count-note"></div></div><button type="button">選択</button>';
+        row.querySelector("strong").textContent = item.name;
+        row.querySelector(".count-note").textContent = \`\${item.size.width}×\${item.size.depth}×\${item.size.height} / \${item.series || "シリーズなし"} / \${manufactureLabel(item)}\`;
+        row.querySelector("button").addEventListener("click", () => selectFurnitureItem(item));
+        els.mobileStudentFurnitureList.append(row);
+      });
+    }
+
+    function renderMobileSelectedStudentManageList() {
+      if (!els.mobileSelectedStudentManageList) return;
+      els.mobileSelectedStudentManageList.innerHTML = "";
+      const students = state.selectedStudents.slice().sort(localeSort);
+      if (!students.length) {
+        els.mobileSelectedStudentManageList.innerHTML = '<div class="empty">選択中の生徒はいません。</div>';
+        return;
+      }
+      students.forEach(student => {
+        const chip = document.createElement("div");
+        chip.className = "mobile-student-chip";
+        chip.innerHTML = '<span></span><button type="button">外す</button>';
+        chip.querySelector("span").textContent = student;
+        chip.querySelector("button").addEventListener("click", () => removeSelectedStudent(student));
+        els.mobileSelectedStudentManageList.append(chip);
       });
     }
 
@@ -3286,6 +3468,17 @@ const html = String.raw`<!doctype html>
       els.requiredBoxesPanel.classList.toggle("hidden", !showBoxes);
     }
 
+    function renderMobileDockTabs() {
+      ["ops", "picker", "targets"].forEach(tab => {
+        const active = state.mobileDockTab === tab;
+        const button = document.querySelector(\`[data-mobile-tab="\${tab}"]\`);
+        const panel = document.querySelector(\`[data-mobile-panel="\${tab}"]\`);
+        button?.classList.toggle("active", active);
+        button?.setAttribute("aria-selected", String(active));
+        panel?.classList.toggle("active", active);
+      });
+    }
+
     function rotateAction() {
       if (state.selectedPlacedId) rotateSelectedPlaced();
       else state.rotated = !state.rotated;
@@ -3321,6 +3514,7 @@ const html = String.raw`<!doctype html>
       renderSelectedStudentList();
       renderPreferenceControls();
       renderSummaryTabs();
+      renderMobileDockTabs();
       renderDataNotice();
     }
 
@@ -3353,10 +3547,21 @@ const html = String.raw`<!doctype html>
           renderSummaryTabs();
         });
       });
+      [els.mobileTabOps, els.mobileTabPicker, els.mobileTabTargets].forEach(button => {
+        button.addEventListener("click", () => {
+          state.mobileDockTab = button.dataset.mobileTab;
+          renderMobileDockTabs();
+        });
+      });
+      els.mobileStudentSelect.addEventListener("change", () => {
+        state.mobileSelectedStudent = els.mobileStudentSelect.value;
+        renderMobileStudentPicker();
+      });
       els.useStudentFilterBtn.addEventListener("click", useSelectedStudentFilter);
       els.clearSelectedStudentsBtn.addEventListener("click", () => {
         state.selectedStudents = [];
         state.studentPriorities = {};
+        state.mobileSelectedStudent = "";
         savePreferences();
         renderSelectedStudentList();
         renderCoveredStudents();
